@@ -1,0 +1,787 @@
+\documentclass[letterpaper,12pt]{article}
+\usepackage{graphicx}
+\usepackage{titlepic}
+\graphicspath{ {./images/} }
+\titlepic{\includegraphics[scale=0.25]{gopher-pixelated.png}}
+\title{Go-lang Crash Course}
+\author{Larry Dewey}
+\date{} % Inserts today's date
+\usepackage{xcolor}   % to access the named colour LightGray
+\definecolor{LightGray}{gray}{0.9}
+
+\usepackage{minted}   % For code-snippets
+\usemintedstyle{perldoc}
+\setminted[golang]{
+  xleftmargin=2.5em,
+  autogobble=true,
+  numbers=left,
+  frame=leftline,
+  framesep=2mm,
+  fontsize=\footnotesize,
+  breaklines=true,
+  bgcolor=LightGray,
+  linenos
+}
+\setminted[text]{
+  bgcolor=LightGray
+}
+
+\usepackage{dirtree}  % Used to draw directory tree structures.
+
+\usepackage{hyperref}   % Hyperlinks allow us to use hyperlinks in our document.
+\hypersetup{
+  colorlinks=true,    % Remove link boxes
+  urlcolor=blue,    % Set unvisited link color (blue)
+  linkcolor=red,    % Set visited link color (red)
+}
+
+\usepackage{etoolbox}   % Used to put padding around the dirtree.
+
+% Request sans-serif fonts.
+\renewcommand{\familydefault}{\sfdefault}
+
+\apptocmd{\dirtree}{\bigskip}{}{}
+\pretocmd{\dirtree}{\bigskip}{}{}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\section*{Changelog:}
+
+\begin{tabular}{|c|c|p{20em}|}
+  \hline
+  \textbf{Date} & \textbf{Version} & \textbf{Changes} \\
+  \hline
+  March 26, 2024 & 0.1 & Initial Release based off Go 1.22.1\\
+  \hline
+  & & \\
+  \hline
+\end{tabular}
+  
+\newpage
+
+\section*{Contributors:}
+\begin{tabular}{|p{15em}|p{15em}|}
+  \hline
+  \textbf{User} & \textbf{Version} \\
+  \hline
+  larrydewey & 0.1 \\
+  \hline
+  & \\
+  \hline
+\end{tabular}
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Directory Structure}\label{directory-structure}
+
+There isn't a widely recognized or enforced directory structure layout
+called ``bless'' in Go. There are, however, some popular conventions for
+structuring Go projects, and the most common one is the ``Standard Go
+Project Layout'' championed by
+\href{https://github.com/golang-standards/project-layout}{golang-standards}.
+
+\dirtree{%
+  .1 <Project Name>/.
+  .2 cmd/.
+  .2 internal/.
+  .2 pkg/.
+  .2 tests/.
+  .2 assets/.
+  .2 configs/.
+  .2 docs/.
+}
+
+\noindent
+Following is a breakdown of all the directories:
+
+\begin{itemize}
+  \item \textbf{cmd/} - This directory contains applciation-specific entry points; usually one per application or service. This is where your main executable resides (\mintinline{text}|main.go|).
+  \item \textbf{internal/} - This directory holds private application and package code that is not meant to be used by other projects.
+  \item \textbf{pkg/} - This directory contains public, reusable packages that can be imported and used by other projects.
+  \item \textbf{test/} - This directory holds unit and integration tests for your code.
+  \item \textbf{assets/} (Optional) - This directory can store static assets like images, CSS, or JavaScript files used by your application.
+  \item \textbf{configs/} (Optional) - This directory can hold configuration files for different environments (e.g., development, production).
+  \item \textbf{docs/} (Optional) - This directory can store project documentation, such as design documents or API documentation.
+\end{itemize}
+
+\section{Packages}
+In Go-lang, packages provide the fundamental construct for name-spacing and modularization. Utilizing the keyword \mintinline{text}|package|, you can specify the designated namespace of a particular module within your project. Like in C/C++ style programming, Go-lang utilizes \mintinline{text}|main| as the default package and function for an executable.
+\subsection*{Executable}
+\begin{minted}
+  {golang}
+  // The package for an executable would be
+  package main
+\end{minted}
+
+\subsection*{Non-executable}
+\begin{minted}
+  {golang}
+  // The package for an library or module would be 
+  package MyLib
+\end{minted}
+
+\section{Data Types}
+Go-lang provides a significant number of static data types. Each of these types may be defined when using a variable with \mintinline{golang}|var|, but often may also be inferred when using the \mintinline{golang}|:=| operator.
+\subsection{Basic Data Types}
+\subsubsection*{bool}
+Represents boolean values (\mintinline{golang}|true| or \mintinline{golang}|false|).
+\begin{minted}{golang}
+var isTrue bool = true  
+\end{minted}
+\subsubsection*{Numeric Types}
+Go-lang supports various numeric types, including:
+
+\begin{itemize}
+  \item \mintinline{golang}|int|,\mintinline{golang}|int8|,\mintinline{golang}|int16|,\mintinline{golang}|int32|,\mintinline{golang}|int64|: Signed integers of various sizes.
+  \item \mintinline{golang}|uint|,\mintinline{golang}|uint8|,\mintinline{golang}|uint16|,\mintinline{golang}|uint32|,\mintinline{golang}|uint64|: Unsigned integers of various sizes.
+  \item \mintinline{golang}|float32|,\mintinline{golang}|float64|: Floating-point numbers of various precision.
+  \item \mintinline{golang}|complex64|,\mintinline{golang}|complex128|: Complex numbers containing imaginary data.
+\end{itemize}
+\begin{minted}{golang}
+  var numInt int = 10
+  var numFloat float64 = 3.14  
+\end{minted}
+\subsubsection*{string}
+Represents a sequence of characters, much like in C/C++.
+\begin{minted}{golang}
+  var message string = "Hello, world!"   
+\end{minted}
+\subsection{Composit Data Types}
+\subsubsection*{Array}
+\begin{itemize}
+  \item Represents a fixed-size collection of items of the same type.
+  \item Globally defined instances live on the heap, locally scoped live on the stack.
+\end{itemize}
+\begin{minted}{golang}
+  var numbers [string] = [3]string{"one", "two", "three"}
+  fmt.Println("Numbers:", numbers)  // Output: Numbers: [one two three]
+\end{minted}
+\subsubsection*{Slice}
+\begin{itemize}
+  \item Represents a dynamically-sized sequence. Slices are built on top of arrays.
+  \item Starting pointer, length, and capacity may live on the stack, but the elements live on the heap.
+\end{itemize}
+\begin{minted}{golang}
+  var numbers []int = []int{1, 2, 3, 4, 5}
+\end{minted}
+\subsubsection*{Map}
+Represents a collection of key-value pairs.
+\begin{minted}{golang}
+  var ages map[string]int = map[string]int{"Alice": 30, "Bob": 35}
+\end{minted}
+\subsubsection*{Struct}
+Used to create user-defined data types representing a collection of related fields.
+\begin{minted}{golang}
+  type Person struct {
+    Name string
+    Age  int
+  }
+  
+  var p Person = Person{Name: "Alice", Age: 30}  
+\end{minted}
+\subsection{Special Data Types and Constructs}
+
+\subsubsection*{Pointer}
+Represents a memory address.
+\begin{minted}{golang}
+  var ptr *int = &numInt
+\end{minted}
+\subsubsection*{Function}
+Represents a function
+\begin{minted}{golang}
+func add(a, b int) int {
+  return a + b
+}
+\end{minted}
+\subsubsection*{Interface}
+Represents a set of method signatures.
+\begin{minted}{golang}
+type Shape interface {
+  Area() float64
+}
+\end{minted}
+\subsubsection*{Channel}
+Represents a communication mechanism between \mintinline{golang}|goroutines|.
+\begin{minted}{golang}
+  ch := make(chan int)
+\end{minted}
+\subsubsection*{Error}
+Represents an error condition.
+\begin{minted}{golang}
+  err := errors.New("Something went wrong")
+\end{minted}
+\subsubsection*{Constants}
+Represents a fixed value.
+\begin{minted}{golang}
+  const pi = 3.14159
+\end{minted}
+\subsubsection*{Nil}
+Represents the absence of a value.
+\begin{minted}{golang}
+var emptySlice []int
+if emptySlice == nil {
+  fmt.Println("Slice is nil")
+}
+\end{minted}
+\subsubsection*{Type Alias}
+Represents an alternative name for an existing type.
+\begin{minted}{golang}
+type MyInt int
+var num MyInt = 10
+\end{minted}
+\subsubsection*{Struct Tag}
+Metadata attached to struct fields for encoding or other purposes.
+\begin{minted}{golang}
+type Person struct {
+  Name string `json:"name"`
+  Age  int  `json:"age"`
+}
+\end{minted}
+\subsubsection*{Context}
+Carries deadlines, cancellation signals, and other request-scoped values across API boundaries and between processes.
+\begin{minted}{golang}
+  ctx, cancel := context.WithCancel(context.Background())
+\end{minted}
+\subsubsection*{Mutex}
+Provides a locking mechanism to synchronize access to shared resources.
+\begin{minted}{golang}
+  var mu sync.Mutex
+\end{minted}
+\subsubsection*{WaitGroup}
+Coordinates multiple \mintinline{text}|goroutines| waiting for a collection of tasks to finish.
+\begin{minted}{golang}
+  var wg sync.WaitGroup
+\end{minted}
+
+\section{Variables and Constants}
+
+\subsection{Variables}
+In Go-lang all variables are considered mutable. The underlying data type may prevent manipulation, but often Go-lang will perform the modification through copying the original data, applying the mutation, and assigning the new memory to the old pointer.
+
+Variables are using the \mintinline{golang}|var| keyword followed by the variable name and its data type. Assignment is optional, but all default values will be \mintinline{golang}|0| , \mintinline{golang}|nil| , or \mintinline{golang}|""|. 
+\begin{minted}{golang}
+  var name string = "Alice" 
+  var age int
+\end{minted}
+There is also a short-hand variable declaration syntax which signifies to the compiler that it should infer the data type to the best of its ability. This is done using the \mintinline{golang}|:=|  operator.
+\begin{minted}{golang}
+  name := "Charlie"  
+  // Is equivalent to:
+  var name string = "Charlie"
+\end{minted}
+\subsection{Constants}
+Often times when programming in Go-lang, you will find that you would like to define a variable which may never be changed. This is done by utilizing a constant value or \mintinline{golang}|const| . These may be un-typed constants or typed constants. However, you may \textbf{\underline{NOT}} use the shorthand operator \mintinline{golang}|:=|  with constants.
+
+\section{Control Flow}
+\subsection{Conditional Statements}
+Conditional statements in Go-lang behave similar to other C-style programming languages, but does not require parenthesis.
+\begin{minted}{golang}
+  if age > 18 {
+  fmt.Println("You are an adult.")
+  } else if age > 21 {
+  fmt.Println("You are of drinking Age.")
+  } else {
+  fmt.Println("You are not an adult.")
+  }
+\end{minted}
+
+\subsection{Loops}
+Go-lang does not provide anything other than \mintinline{golang}|for| for looping. While this is a limited option, this construct may be used to emulate behaviors like:
+\begin{itemize}
+  \item \textbf{Traditional C-style for-loops}
+  \begin{minted}{golang}
+  for i := 0; i < 5; i++ {
+    fmt.Println(i)
+  }
+  \end{minted}
+  \item \textbf{For-each-style loops} - 
+  In Go-lang for-each style loops will always provide index values when looping. They may be ignored, as seen below, but they will always be provided. It is possible to ignore the values, and only use the index by capturing only one value after \mintinline{golang}|for|.
+  \begin{minted}{golang}
+    numbers := []int{1, 2, 3, 4, 5}
+    for _, num := range numbers {  // _ discards the index value
+      fmt.Println(num)
+    }
+
+    // Accessing both index and value
+    for i, num := range numbers {
+      fmt.Println("Index:", i, "Value:", num)
+    }
+  \end{minted}
+  \item \textbf{While-style loops}
+  \begin{minted}{golang}
+    end := 5
+
+    for end > 0 {
+      // Some code to do exactly five times.
+      end -= 1
+    }
+  \end{minted}
+  \item \textbf{Forever loops}
+  \begin{minted}{golang}
+    for {
+      // Code to be executed repeatedly
+      break  // Example of breaking out of the loop
+    }
+  \end{minted}
+\end{itemize}
+\subsection{Switch Statements}
+Executes code based upon a specifically matched value
+\begin{minted}{golang}
+switch language := "Go"; language {
+  case "Go":
+    fmt.Println("You are learning the Go language!")
+  default:
+    fmt.Println("Good luck with your programming journey!")
+}
+\end{minted}
+
+\newpage
+
+\section{Functions}
+Functions are fundamental building blocks that allow you to organize your code into reusable blocks. Return types may contain more than one value. Go-lang does this by utilizing a structure similar to a Tuple. This is also how the error system works.
+\begin{minted}{golang}
+// Function with a single return type.
+func <function_name>([parameter parameterType],..) [return type] {
+  // Does something here with parameters. Possibly returning
+  // something.
+}
+
+// Function with multiple return types.
+func <function_name>([parameter parameterType],..) ([return type],..) {
+  // Does something here with parameters. Possibly returning
+  // multiple things.
+}
+
+// Example:
+func getFullName(firstName, lastName string) (string, string) {
+  return firstName, lastName
+}
+
+fname, lname := getFullName("Charlie", "Brown")
+fmt.Println(fname, lname)  // Prints "Charlie Brown"
+\end{minted}
+\section{Error Handling}
+In Go-lang, error handling differs from some other programming languages. It utilizes a built-in \mintinline{golang}|error| interface instead of exceptions.
+\subsection{Error Interface}
+Any type that implements the \mintinline{golang}|error| interface can be used to represent an error. The \mintinline{golang}|error| interface has a single method: \mintinline{golang}|Error() string| which returns a human-readable error message.
+\begin{minted}{golang}
+type MyError struct {
+  message string
+}
+
+// Implementing the error interface for MyError.
+func (err MyError) Error() string {
+  return err.message
+}
+\end{minted}
+\subsection{Returning Errors from Functions}
+Functions can indicate errors by returning a value of a type that implements the \mintinline{golang}|error| interface. The calling code can then check for the returned error and handle it appropriately.
+\begin{minted}{golang}
+  // Although this example uses a function, this is true for in-line checking, as well.
+  func openFile(filePath string) (*os.File, error) {
+    file, err := os.Open(filePath)
+    if err != nil {
+    return nil, err  // Return nil for file and the error
+    }
+    return file, nil  // Return opened file and nil for no error
+  }
+\end{minted}
+
+\section{Pointers}
+Pointers are a powerful tool that allows you to work with memory addresses directly. They play a crucial role in various aspects of Go-lang programming, such as:
+\begin{itemize}
+  \item \textbf{Manipulating data indirectly:} Pointers let you modify the value of a variable stored elsewhere in memory.
+  \item \textbf{Passing arguments by reference:} When you pass a pointer to a function, you're essentially passing the memory address of the original variable, allowing the function to modify it directly.
+  \item \textbf{Working with dynamic data structures:} Pointers are fundamental for building and managing data structures like slices, maps, and linked lists.
+When working with pointers, if you are updating or changing a value, it must be de-referenced by using the \mintinline{golang}|*| operator.
+\end{itemize}
+\begin{minted}{golang}
+  var age int = 30
+  agePtr := &age    // agePtr is a pointer to an integer (int *)
+  fmt.Println(*agePtr)  // Prints 30 (dereferencing agePtr to access the value at its address)
+\end{minted}
+\textbf{CAUTION:}
+\begin{itemize}
+  \item Pointers can introduce complexity and potential errors if not used carefully.
+  \item Be mindful of \mintinline{golang}|nil| pointer exceptions and ensure you're de-referencing valid pointers.
+  \item Use clear variable names and comments to improve code readability when working with pointers.
+\end{itemize}
+
+\section{Methods}
+In Go-lang, methods provide a way to attach functionality (functions) to user-defined types (structs). They allow you to create objects that encapsulate data (attributes) and behavior (methods that operate on that data). Here's a breakdown of how methods work:
+\newpage
+\subsection{Defining Methods}
+Methods are declared similar to regular functions, but they have a receiver argument placed before the function name within the parentheses. The receiver argument specifies the type (struct) that the method belongs to. It allows the method to access and potentially modify the fields of the struct.
+\begin{minted}{golang}
+type Person struct {
+  Name string
+  Age  int
+}
+
+func (p Person) Greet() {
+  fmt.Println("Hello, my name is", p.Name)
+}
+\end{minted}
+\textbf{In this example:}
+\begin{itemize}
+  \item \mintinline{golang}|Person| is the struct type.
+  \item \mintinline{golang}|Greet| is a method that takes a receiver argument \mintinline{golang}|p| of type \mintinline{golang}|Person|.
+  \item Inside the method, \mintinline{golang}|p.Name| accesses the \mintinline{golang}|Name| field of the \mintinline{golang}|Person| object.
+\end{itemize}
+\subsection{Calling Methods}
+You call a method on a struct instance using the dot notation (\mintinline{golang}|.|). The struct instance (object) is provided before the dot, followed by the method name.
+\begin{minted}{golang}
+var alice Person = Person{Name: "Alice", Age: 30}
+alice.Greet() // Calls the Greet method on the alice object
+\end{minted}
+\subsection{Receiver Types}
+The receiver argument of a method can be of two types:
+\begin{itemize}
+  \item \textbf{Value receiver:} The method receives a copy of the struct value. Any modifications within the method won't affect the original struct.
+  \item \textbf{Pointer receiver:} The method receives a pointer to the struct. This allows the method to modify the original struct's fields.
+\end{itemize}
+\begin{minted}{golang}
+  func (p *Person) SetAge(newAge int) {
+    p.Age = newAge  // Modifies the Age field of the struct pointed to by p
+  }
+\end{minted}
+\noindent
+\textbf{In this Example:}
+\begin{itemize}
+  \item \mintinline{golang}|SetAge| is a pointer receiver method.
+  \item It takes a pointer to Person (\mintinline{golang}|*Person|) and modifies the \mintinline{golang}|Age| field of the struct it points to.
+\end{itemize}
+\section{Generic Types}
+Generics, introduced in Go-lang version 1.18, provide a way to write functions and data structures that can work with various data types without sacrificing type safety. Generics use placeholders called type parameters to represent the actual data type that will be used when the generic function or type is instantiated.
+\begin{minted}{golang}
+  func PrintSlice[T any](slice []T) {
+    for _, element := range slice {
+      fmt.Println(element)
+    }
+  }
+\end{minted}
+\textbf{In this Example:}
+\begin{itemize}
+  \item \mintinline{golang}|PrintSlice| is a generic function.
+  \item \mintinline{golang}|T| is a type parameter that can be any type.
+\end{itemize}
+
+\newpage
+
+\subsection{Type Constraints}
+You can optionally specify constraints on the type parameters using interfaces. This ensures that only types that implement the specified interface can be used as the actual type when instantiating the generic function or
+type.
+\begin{minted}{golang}
+type Ordered interface {
+  < (other Ordered) bool
+}
+
+func Min[T Ordered](values []T) T {
+  // Implementation to find the minimum value based on the Ordered interface
+}
+\end{minted}
+\textbf{In this Example:}
+\begin{itemize}
+  \item \mintinline{golang}|Ordered| is an interface that defines a \mintinline{golang}|<| comparison method.
+  \item \mintinline{golang}|Min| is a generic function with a type constraint.
+  \item It only accepts types that implement the \mintinline{golang}|Ordered| interface, ensuring they can be compoared for finding the minimum value.
+\end{itemize}
+\subsection{Embedding}
+In Go-lang, embedding — also known as aggregation — allows you to reuse the fields and methods of a type (struct or interface) within another type. It's a powerful mechanism for code organization and promoting code re-usability. In Go-lang, fields are semi-inherited into the child structure.
+\begin{minted}{golang}
+type Person struct {
+  Name string
+  Age  int
+}
+
+type Employee struct {
+  Person  // Embeds the Person struct fields
+  JobTitle string
+}
+\end{minted}
+\newpage
+\noindent
+\textbf{In this Example:}
+\begin{itemize}
+  \item \mintinline{golang}|Person| is a struct with fields \mintinline{golang}|Name| and \mintinline{golang}|Age|.
+  \item \mintinline{golang}|Employee| embeds the \mintinline{golang}|Person| struct.
+  \item An \mintinline{golang}|Employee| object has all the fields of \mintinline{golang}|Person|(\mintinline{golang}|Name|,\mintinline{golang}|Age|) along with its own field \mintinline{golang}|JobTitle|.
+\end{itemize}
+\section{Interfaces}
+Interfaces are a powerful mechanism for defining contracts between different parts of your code. They act like blueprints that specify the behavior a type must implement without dictating the underlying implementation details.
+\subsection{Defining Interfaces}
+Interfaces are declared using the \mintinline{golang}|interface| keyword followed by a name. They can contain method signatures, which define the names and parameter types of methods the implementing type must provide.
+\begin{minted}{golang}
+interface Printer {
+  Print() string
+}
+\end{minted}
+\textbf{In this Example:}
+\begin{itemize}
+  \item \mintinline{golang}|Printer| is an interface
+  \item It defines a single method \mintinline{golang}|Print()| that takes no arguments and returns a string.
+\end{itemize}
+\subsection{Implementing Interfaces}
+Any type (struct, another interface) can implement an interface by declaring that it "implements" the interface name. The type must then provide implementations for all the methods defined in the interface.
+\begin{minted}{golang}
+  type Person struct {
+    Name string
+  }
+    
+  func (p Person) Print() string {
+    return fmt.Sprintf("Hello, my name is %s", p.Name)
+  }
+\end{minted}
+\textbf{In this Example:}
+\begin{itemize}
+  \item The \mintinline{golang}|Person| struct implements the \mintinline{golang}|Printer| interface.
+  \item It provides a \mintinline{golang}|Print()| method that satisfies the interface signature.
+\end{itemize}
+\subsection{Using Interfaces}
+You can declare variables of the interface type. These variables can then hold references to objects of any type that implements the interface.
+\begin{minted}{golang}
+  func PrintInfo(p Printer) {
+    fmt.Println(p.Print())
+  }
+\end{minted}
+\textbf{In this Example:}
+\begin{itemize}
+  \item The \mintinline{golang}|PrintInfo| function takes a parameter of type \mintinline{golang}|Printer|.
+  \item It can be called with any object that implements the \mintinline{golang}|Print()| method (like a \mintinline{golang}|Person| object in this case).
+\end{itemize}
+
+\newpage
+\noindent
+Just like with generics, it is possible to embed interfaces within each other.
+\begin{minted}{golang}
+  interface Shape { Area() float64 }
+    
+  interface Colored { Color() string }
+    
+  // New interface combining functionalities from both Shape and Colored
+  type ColoredShape interface {
+    Shape
+    Colored
+  }
+    
+  type ColoredSquare struct {
+    side float64
+    color string
+  }
+    
+  func (s ColoredSquare) Area() float64 {
+    return s.side * s.side
+  }
+    
+  func (s ColoredSquare) Color() string {
+    return s.color
+  }
+    
+  // ColoredSquare implements both Shape and Colored interfaces (inherited through ColoredShape)
+  var _ ColoredShape = ColoredSquare{}
+\end{minted}
+\section{Concurrency}
+Go-lang excels at handling concurrent tasks, allowing your program to make progress on multiple operations seemingly simultaneously. This improves responsiveness and potentially speeds up execution by utilizing multiple cores or processors. Here's a breakdown of the key components that enable concurrency:
+\subsection{Goroutines}
+Goroutines are lightweight threads of execution managed by the Go runtime. You launch a goroutine using the go keyword followed by a function call. Unlike threads in some other languages, goroutines are much cheaper to create and manage. Multiple goroutines can run concurrently within the same address space, sharing the same memory.
+\begin{minted}{golang}
+  go func() {
+    fmt.Println("Hello from a goroutine!")
+  }
+\end{minted}
+\subsection{Channels}
+Channels are a communication mechanism between goroutines. They act as synchronized queues that allow goroutines to send and receive data. A channel must be of a specific data type, and only values of that type can be sent or received through the channel. Sending and receiving operations on channels are blocking by default, meaning the sending goroutine will
+wait until there's a receiver ready, and vice versa.
+\begin{minted}{golang}
+ch := make(chan string)
+
+go func() {
+  ch <- "Message from a goroutine!"
+}
+
+message := <-ch
+fmt.Println(message)
+\end{minted}
+
+\subsection{Synchronization (Mutexes and Semaphors)}
+While goroutines share memory, uncontrolled access can lead to race conditions (unexpected behavior due to concurrent access). Synchronization primitives like mutexes (mutual exclusion locks) and semaphores provide mechanisms for goroutines to coordinate access to shared resources.
+\subsubsection*{Mutexes}
+A goroutine can acquire a lock on amutex before accessing a shared resource, ensuring only one goroutine can access it at a time.
+\begin{minted}{golang}
+var mutex sync.Mutex
+func updateCounter() {
+  mutex.Lock()
+  defer mutex.Unlock()  // Ensures unlock even in case of panic or errors
+  // Access and update shared counter here
+}
+\end{minted}
+
+\subsubsection*{Semaphores}
+Semaphores control access to a limited number of resources. A goroutine trying to acquire a semaphore that's already full will be blocked until another goroutine releases it.
+\begin{minted}{golang}
+// Simulate a shared resource (e.g., database connection)
+var resource sync.Mutex
+
+func accessResource(name string) {
+  resource.Lock()
+  defer resource.Unlock()
+  fmt.Println("Goroutine", name, "accessing resource")
+  // Simulate some work on the resource
+  fmt.Println("Goroutine", name, "working on resource")
+}
+
+func main() {
+  // Semaphore using 2 concurrent buffered channel
+  sem := make(chan struct{}, 2) 
+
+  for i := 0; i < 5; i++ {
+    go func(i int) {
+      <-sem // Acquire semaphore (block if full)
+      defer func() { sem <- struct{}{} }() // Release semaphore
+      accessResource(fmt.Sprintf("G%d", i))
+    }(i)
+  }
+
+  // Wait for all goroutines to finish
+  for i := 0; i < 5; i++ {
+    <-sem
+  }
+}
+\end{minted}
+\subsection{Select}
+The \mintinline{golang}|select| statement allows a goroutine to wait on multiple communication channels or operations simultaneously. It's a powerful tool for managing concurrency and handling multiple potential events. It will unblock when one of the channels or operations becomes ready.
+\begin{minted}{golang}
+select {
+  case msg := <-ch1:
+    fmt.Println("Received on ch1:", msg)
+  case msg := <-ch2:
+    fmt.Println("Received on ch2:", msg)
+  default:
+    fmt.Println("No messages received!")
+}
+\end{minted}
+\subsection{Challenges of Concurrency}
+\begin{itemize}
+  \item \textbf{Complexity:} Concurrency adds complexity to programs compared to traditional sequential programming.
+  \item \textbf{Race Conditions:} It's crucial to carefully design your concurrent code to avoid race conditions and ensure proper synchronization between goroutines.
+  \item \textbf{Deadlocks:} Deadlocks can occur if goroutines are waiting on each other indefinitely. Proper resource management and channel usage are essential to prevent deadlocks.
+\end{itemize}
+
+\section{Reflection}
+In Go, reflection is a powerful but sometimes complex feature that allows your program to examine and manipulate its own structure at runtime. It provides functionalities to:
+\begin{itemize}
+  \item \textbf{Inspect Types:} You can discover the type of a variable or value at runtime using the reflect package.
+  \item \textbf{Access Values:} Reflection allows you to access the underlying value stored in a variable, even if it's an interface or pointer.
+  \item \textbf{Modify Values:} In some cases, you can modify the value stored in a variable using reflection (be cautious due to potential risks).
+  \item \textbf{Invoke Methods:} Reflection can be used to call methods on objects dynamically based on the type information obtained at runtime.
+\end{itemize}
+\noindent
+\subsection*{How Reflection Works:}
+\begin{enumerate}
+  \item \textbf{The \mintinline{golang}|reflect| Package:} Provides the core functionalities for reflection; including various functions and types to work with reflected values and types. To utilize reflection, this library must be imported.
+  \item \textbf{Types and Values:} Reflection revolves around two key concepts:
+  \begin{itemize}
+    \item \mintinline{golang}|reflect.Type| - represents the type informatin of a variable or value.
+    \item \mintinline{golang}|reflect.Value| - represents the actual value stored in a variable.
+  \end{itemize}
+  \item \textbf{Getting Type Information:}
+  \begin{itemize}
+    \item The \mintinline{golang}|reflect.TypeOf(x)| function takes a variable \mintinline{golang}|x| and returns its corresponding \mintinline{golang}|reflect.Type|.
+    \item You can then use methods on the \mintinline{golang}|reflect.Type| to get details about the type, such as its kind (e.g., \mintinline{golang}|int|, \mintinline{golang}|string|, \mintinline{golang}|struct|), name, and underlying fields for structs.
+  \end{itemize}
+  \item \textbf{Getting and Modifying Values:}
+  \begin{itemize}
+    \item The \mintinline{golang}|reflect.ValueOf(x)| function takes a variable \mintinline{golang}|x| and returns its corresponding \mintinline{golang}|reflect.Value|.
+    \item This \mintinline{golang}|reflect.Value| can be used to access the underlying value \\
+    through its \mintinline{golang}|Interface()| method (if applicable) or by converting it to a specific type using the \mintinline{golang}|Kind()| and other methods.
+    \item \textbf{CAUTION:} Modifying values using reflection should be done cautiously. Improper modifications can lead to unexpected behavior or program crashes. It's generally recommended to avoid modifying values via reflection unless absolutely necessary.
+  \end{itemize}
+\end{enumerate}
+\subsection*{Use Cases}
+\begin{itemize}
+  \item \textbf{Generic Code:} Reflection can be useful for writing generic functions or data structures that can work with various types at runtime.
+  \item \textbf{Encoding/Decoding:} It can be helpful for implementing custom encoders or decoders that work with different data formats based on type information.
+  \item \textbf{Validation:} Reflection can be used to introspect a struct's fields and perform validation checks on their values.
+\end{itemize}
+\subsection*{When to Avoid Reflection}
+\begin{itemize}
+  \item \textbf{Performance:} Reflection can incur some overhead compared to direct access. Use it judiciously when the benefits outweigh the performance cost.
+  \item \textbf{Complexity:} Reflection can add complexity to your code. If a simpler, non-reflective approach achieves the same result, prefer the simpler solution.
+\end{itemize}
+\section{Testing}
+Go-lang prioritizes code maintainability and test-ability. The \mintinline{golang}|testing| package provides the foundation for writing unit tests. It offers functionalities for defining test cases, running tests, and reporting results. The primary utility to implement unit testing is through using test functions.
+\subsection{Functions}
+Test functions are the building blocks of Go-lang unit testing. They are named \mintinline{golang}|Test*| followed by a descriptive name (ex. \mintinline{golang}|TestSum_PositiveNumbers|). Each testing function takes a pointer to a \mintinline{golang}|testing.T| object as its argument. This pointer to an object provides methods for logging information, reporting errors, and marking the test as failed.
+\begin{minted}{golang}
+  func Sum(a, b int) int {
+    return a + b
+  }
+
+  // Example of a unit test for positive numbers.
+  func TestSum_PositiveNumbers(t *testing.T) {
+    result := Sum(5, 3)
+    if result != 8 {
+      t.Errorf("Expected 8, got %d", result) // Report an error if assertion fails
+    }
+  }
+\end{minted}
+As you can imagine, this quickly can become disorganized when needing to run multiple unit tests which are closely related. Fortunately, Go-lang provides subtests and table-driven tests to help with this. 
+\subsection{Subtests}
+Subtests are supported within a test function using \mintinline{golang}|t.Run|, This allows you to group related test cases and report them individually within the overall test.
+\begin{minted}{golang}
+func TestSum(t *testing.T) {
+  t.Run("positive numbers", func(t *testing.T) {
+    result := Sum(5, 3)
+    if result != 8 {
+      t.Errorf("Expected 8, got %d", result)
+    }
+  })
+  t.Run("negative numbers", func(t *testing.T) {
+    result := Sum(-5, -3)
+    if result != -8 {
+      t.Errorf("Expected -8, got %d", result)
+    }
+  })
+}
+\end{minted}
+\subsection{Table-driven Testing}
+Table-driven testing provides even further granularity, where you define a set of test cases as a slice of structs or maps. This promotes code re-usability and improves test readability.
+\begin{minted}{golang}
+type testCase struct {
+  a int
+  b int
+  expected int
+}
+
+func TestSum(t *testing.T) {
+  testCases := []testCase {
+    {a: 5, b: 3, expected: 8},
+    {a: -5, b: -3, expected: -8},
+  }
+
+  for _, tc := range testCases {
+    result := Sum(tc.a, tc.b)
+    if result != tc.expected {
+      t.Errorf(
+        "Expected %d for (%d, %d), got %d",
+        tc.expected,
+        tc.a,
+        tc.b,
+        result
+      )
+    }
+  }
+}
+\end{minted}
+\subsection{Running Tests}
+You use the \mintinline{text}|go test| command on the command line to run your tests. This command searches for files ending in \mintinline{text}|_test.go| within the current directory and its subdirectories.
+It then executes all the test functions it finds and reports the results, including failures and timings.
+\subsection{Benchmarking}
+Go-lang also supports benchmarks, which are essentially timed tests used to compare the performance of different code implementations. Benchmark functions are typically named \mintinline{golang}|Benchmark*| and follow a similar structure to test functions.
+\end{document}
